@@ -35,11 +35,12 @@ with SMBus(2) as bus:
 	
 	#light level sensor
 	# make sure sensor is on, we are not worried about power consuption
-	bus.write_word_data(0x10, 0x00, 0x1000)
+	# ALS_GAIN: 1/8, ALS_IT 50
+	bus.write_word_data(0x10, 0x00, 0x1200)
 	time.sleep(0.01)
 	# read from light sensor
 	light = bus.read_word_data(0x10, 0x04)
-	print ("light level is: ", light)
+	#print ("light level is: ", light)
 	
 	#Pressure and temp
 	#reset device
@@ -77,19 +78,21 @@ with SMBus(2) as bus:
 	pressure = int.from_bytes(bytes(bus.read_i2c_block_data(0x76,0x00,3)),'big')
 	#print ("uncorrected pressure is: ", pressure)
 
-	#Teperature/pressure calibration from data sheet 
-	delta_temp = temp - (c5 << 8)
-	debug('delta_temp')
-	initial_temp = float(2000) + (delta_temp * c6 >> 23)
-	debug('initial_temp')
-	temp2, offset2, sensitivity2 = corrections(initial_temp, delta_temp)
-	corrected_temp = (initial_temp -temp2) / 100
-	offset = ((c2 << 17) + ((c4 *delta_temp) >> 6)) - offset2
-	debug('offset')
-	sensitivity = ((c1 << 16) +((c3*delta_temp) >> 7)) - sensitivity2
-	debug('sensitivity')
-	corrected_pressure = ((((pressure *sensitivity) >>21) - offset) >> 15) / 100
-	print ("Corrected Temperature: ", corrected_temp, "C")
-	print ("Corrected Pressure: ", corrected_pressure, "mbar")
+#Teperature/pressure calibration from data sheet 
+delta_temp = temp - (c5 << 8)
+debug('delta_temp')
+initial_temp = float(2000) + (delta_temp * c6 >> 23)
+debug('initial_temp')
+temp2, offset2, sensitivity2 = corrections(initial_temp, delta_temp)
+corrected_temp = (initial_temp -temp2) / 100
+offset = ((c2 << 17) + ((c4 *delta_temp) >> 6)) - offset2
+debug('offset')
+sensitivity = ((c1 << 16) +((c3*delta_temp) >> 7)) - sensitivity2
+debug('sensitivity')
+corrected_pressure = ((((pressure *sensitivity) >>21) - offset) >> 15) / 100
+print ("Corrected Temperature: ", corrected_temp, "C")
+print ("Corrected Pressure: ", corrected_pressure, "mbar")
 	
-	
+#light level calibration
+corrected_light = light * 0.9216
+print ("Corrected Light: ", round(corrected_light,0), "lx")
