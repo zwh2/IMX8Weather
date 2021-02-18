@@ -28,12 +28,12 @@ def corrections(initial_temp, delta_temp):
 
 #debug function
 def debug(variable):
-	pass
-    #print (variable, '=', (eval(variable)))
+	#pass
+    print (variable, '=', (eval(variable)))
 
 with SMBus(2) as bus:
 	
-	#light level sensor
+	###light level sensor
 	# make sure sensor is on, we are not worried about power consuption
 	# ALS_GAIN: 1/8, ALS_IT 50
 	bus.write_word_data(0x10, 0x00, 0x1200)
@@ -42,7 +42,7 @@ with SMBus(2) as bus:
 	light = bus.read_word_data(0x10, 0x04)
 	#print ("light level is: ", light)
 	
-	#Pressure and temp
+	###Pressure and temp
 	#reset device
 	bus.write_byte(0x76 , 0x1E)
 	#read the calibration data	
@@ -53,13 +53,6 @@ with SMBus(2) as bus:
 	c4 = int.from_bytes(bytes(bus.read_i2c_block_data(0x76 , 0xA8, 2)), 'big')
 	c5 = int.from_bytes(bytes(bus.read_i2c_block_data(0x76 , 0xAA, 2)), 'big')
 	c6 = int.from_bytes(bytes(bus.read_i2c_block_data(0x76 , 0xAC, 2)), 'big')
-	debug('c0')
-	debug('c1')
-	debug('c2')
-	debug('c3')
-	debug('c4')
-	debug('c5')
-	debug('c6')
 
 	#start conversion for temp
 	bus.write_byte(0x76, 0x50)
@@ -78,17 +71,19 @@ with SMBus(2) as bus:
 	pressure = int.from_bytes(bytes(bus.read_i2c_block_data(0x76,0x00,3)),'big')
 	#print ("uncorrected pressure is: ", pressure)
 
+
+	### Humidity
+	#Reset
+	bus.write_byte(0x40, 0xFE)
+	humidity = int.from_bytes(bytes(bus.read_i2c_block_data(0x40,0xE5,2)),'big') >> 2
+
 #Teperature/pressure calibration from data sheet 
 delta_temp = temp - (c5 << 8)
-debug('delta_temp')
 initial_temp = float(2000) + (delta_temp * c6 >> 23)
-debug('initial_temp')
 temp2, offset2, sensitivity2 = corrections(initial_temp, delta_temp)
 corrected_temp = (initial_temp -temp2) / 100
 offset = ((c2 << 17) + ((c4 *delta_temp) >> 6)) - offset2
-debug('offset')
 sensitivity = ((c1 << 16) +((c3*delta_temp) >> 7)) - sensitivity2
-debug('sensitivity')
 corrected_pressure = ((((pressure *sensitivity) >>21) - offset) >> 15) / 100
 print ("Corrected Temperature: ", corrected_temp, "C")
 print ("Corrected Pressure: ", corrected_pressure, "mbar")
@@ -96,3 +91,7 @@ print ("Corrected Pressure: ", corrected_pressure, "mbar")
 #light level calibration
 corrected_light = light * 0.9216
 print ("Corrected Light: ", round(corrected_light,0), "lx")
+
+#humidity calibration from data sheet
+corrected_humidity = (125 * humidity /(1 << 16))-6
+print ("Corrected Humidity: ", round(corrected_humidity,1), '%')
