@@ -54,6 +54,8 @@ if __name__ == "__main__":
 		#Reset Humidity
 		bus.write_byte(0x40, 0xFE)
 		## end initialization
+
+	count = 59
 	while(True):
 		with SMBus(2) as bus:
 			#start conversion for temp
@@ -100,6 +102,16 @@ if __name__ == "__main__":
 		# print (data)
 		with open('/www/pages/live.json', 'w') as outfile:
 			json.dump(data, outfile)
+
+		count = count +1
+		if (count == 60):
+			with open('/www/pages/history.json', 'r+') as outfile:
+				oldData = json.load(outfile)
+				oldData.update(data)
+				outfile.seek(0)
+				json.dump(oldData, outfile)
+			count = 0
+		
 		
 		time.sleep(1)
 
