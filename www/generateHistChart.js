@@ -1,4 +1,4 @@
-export const generateChart = (title, temperature, pressure, humidity, light) => ({
+export const generateHistChart = (title, temperature, pressure, humidity, light) => ({
     theme: "light2",
     title: {
         text: title
@@ -51,7 +51,8 @@ export const generateChart = (title, temperature, pressure, humidity, light) => 
         color: "#C24642",
         showInLegend: true,
         dataPoints: temperature,
-        axisYType: "primary"
+        axisYType: "primary",
+        markerType: "none"
     },
     {
         type: "line",
@@ -60,7 +61,8 @@ export const generateChart = (title, temperature, pressure, humidity, light) => 
         showInLegend: true,
         dataPoints: pressure,
         axisYIndex: 1,
-        axisYType: "primary"
+        axisYType: "primary",
+        markerType: "none"
     },
     {
         type: "line",
@@ -68,7 +70,8 @@ export const generateChart = (title, temperature, pressure, humidity, light) => 
         color: "#7F6084",
         showInLegend: true,
         dataPoints: humidity,
-        axisYType: "secondary"
+        axisYType: "secondary",
+        markerType: "none"
     },
     {
         type: "line",
@@ -77,7 +80,8 @@ export const generateChart = (title, temperature, pressure, humidity, light) => 
         showInLegend: true,
         dataPoints: light,
         axisYIndex: 1,
-        axisYType: "secondary"
+        axisYType: "secondary",
+        markerType: "none"
     }]
 })
 
