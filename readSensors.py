@@ -1,5 +1,5 @@
 from smbus2 import SMBus
-import time, json
+import time, json, subprocess
 from datetime import datetime
 
 
@@ -34,6 +34,10 @@ def debug(variable):
 if __name__ == "__main__":
 	with SMBus(2) as bus:
 		
+		# try to get the system time correct
+		
+
+
 		#init
 		###light level sensor
 		# make sure sensor is on, we are not worried about power consuption
@@ -55,7 +59,11 @@ if __name__ == "__main__":
 		bus.write_byte(0x40, 0xFE)
 		## end initialization
 
-	count = 59
+	count = 0
+	hTemp = 0
+	hPressure = 0
+	hHumidity = 0
+	hLight = 0
 	while(True):
 		with SMBus(2) as bus:
 			#start conversion for temp
@@ -91,7 +99,6 @@ if __name__ == "__main__":
 		corrected_humidity = (125 * humidity /(1 << 16))-6
 		# print ("Corrected Humidity: ", round(corrected_humidity,1), '%')
 
-		#time = str(datetime.now())
 		data = {}
 		data[str(datetime.now())]={
 			'temp':corrected_temp,
@@ -104,13 +111,28 @@ if __name__ == "__main__":
 			json.dump(data, outfile)
 
 		count = count +1
+		hTemp = hTemp + corrected_temp
+		hPressure = hPressure + corrected_pressure
+		hHumidity = hHumidity + corrected_humidity
+		hLight = hLight + corrected_light
 		if (count == 60):
+			data = {}
+			data[str(datetime.now())]={
+				'temp':hTemp/60,
+				'pressure':hPressure/60,
+				'humidity':hHumidity/60,
+				'light':hLight/60
+			}
 			with open('/www/pages/history.json', 'r+') as outfile:
 				oldData = json.load(outfile)
 				oldData.update(data)
 				outfile.seek(0)
 				json.dump(oldData, outfile)
 			count = 0
+			hTemp = 0
+			hPressure = 0
+			hHumidity = 0
+			hLight = 0
 		
 		
 		time.sleep(1)
