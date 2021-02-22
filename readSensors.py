@@ -1,7 +1,7 @@
 from smbus2 import SMBus
-import time, json, subprocess
+import time, json, subprocess, sys, socket, struct
 from datetime import datetime
-
+from socket import AF_INET, SOCK_DGRAM
 
 #borrowed from Adafruit driver
 def corrections(initial_temp, delta_temp):
@@ -26,18 +26,53 @@ def corrections(initial_temp, delta_temp):
 		sensitivity2 = 0
 	return temp2, offset2, sensitivity2
 
+#Borrowed from mattcrampton.com with edit to return datetime object
+def getNTPTime(host = "pool.ntp.org"):
+        port = 123
+        buf = 1024
+        address = (host,port)
+        msg = '\x1b' + 47 * '\0'
+
+        # reference time (in seconds since 1900-01-01 00:00:00)
+        TIME1970 = 2208988800 # 1970-01-01 00:00:00
+ 
+        # connect to server
+        client = socket.socket( AF_INET, SOCK_DGRAM)
+        client.sendto(msg.encode('utf-8'), address)
+        msg, address = client.recvfrom( buf )
+ 
+        t = struct.unpack( "!12I", msg )[10]
+        t -= TIME1970
+        return datetime.fromtimestamp(t)
+
 #debug function
 def debug(variable):
 	#pass
     print (variable, '=', hex(eval(variable)))
 
 if __name__ == "__main__":
+	# try to get the system time correct
+	try :
+		theTime = getNTPTime()
+		print ((theTime))
+		subprocess.run(["date", "--set=%s" % theTime])
+		subprocess.check_output("hwclock --rtc /dev/rtc1 --systohc", shell=True)
+	except OSError as e:
+		print ("network error?")
+		hwDate = subprocess.check_output("hwclock --rtc /dev/rtc1", shell=True).decode()
+		hwDate = datetime.strptime(hwDate[:24],"%a %b %d %X %Y")
+		if hwDate > datetime(2021,1,1):
+			#the date in the HW clock is probably accurate. it goes back to 1970 if it looses power
+			subprocess.check_output("hwclock --rtc /dev/rtc1 --hctosys")
+		else:
+			#we dont have NTP or a valid RTC so we will just guess that the time is 1 min after the last time we had a reading
+			with open('/www/pages/live.json', 'r') as outfile:
+				data = json.load(outfile)
+			theTime = list(data.keys())[0]
+			subprocess.run(["date", "--set=%s" % theTime.split('.')[0]])
+			subprocess.check_output("hwclock --rtc /dev/rtc1 --systohc", shell=True)
+
 	with SMBus(2) as bus:
-		
-		# try to get the system time correct
-		
-
-
 		#init
 		###light level sensor
 		# make sure sensor is on, we are not worried about power consuption
