@@ -163,10 +163,19 @@ if __name__ == "__main__":
 				'light':hLight/60
 			}
 			with open('/www/pages/history.json', 'r+') as outfile:
-				oldData = json.load(outfile)
-				oldData.update(data)
-				outfile.seek(0)
-				json.dump(oldData, outfile)
+				try: 
+					oldData = json.load(outfile)
+					oldData.update(data)
+					outfile.seek(0)
+					json.dump(oldData, outfile)
+				except json.JSONDecodeError as e:
+					print("json error making new file")
+					with open('historylog.json', 'a') as logfile:
+						json.dump(oldData,logfile)
+					outfile.seek(0)
+					json.dump(data, outfile)
+				
+				
 			count = 0
 			hTemp = 0
 			hPressure = 0
