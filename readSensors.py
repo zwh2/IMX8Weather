@@ -71,13 +71,16 @@ if __name__ == "__main__":
 			theTime = list(data.keys())[0]
 			subprocess.run(["date", "--set=%s" % theTime.split('.')[0]])
 			subprocess.check_output("hwclock --rtc /dev/rtc1 --systohc", shell=True)
+	
+	subprocess.run(["systemctl", "restart", "hostapd.service"])
+
 
 	with SMBus(2) as bus:
 		#init
 		###light level sensor
 		# make sure sensor is on, we are not worried about power consuption
-		# ALS_GAIN: 1/8, ALS_IT 50
-		bus.write_word_data(0x10, 0x00, 0x1200)
+		# ALS_GAIN: 1/8, ALS_IT 200
+		bus.write_word_data(0x10, 0x00, 0x1040)
 		
 		###Pressure and temp
 		#reset device
@@ -94,6 +97,7 @@ if __name__ == "__main__":
 		bus.write_byte(0x40, 0xFE)
 		## end initialization
 
+	print("initialization complete")
 	count = 0
 	hTemp = 0
 	hPressure = 0
@@ -127,7 +131,7 @@ if __name__ == "__main__":
 		# print ("Corrected Pressure: ", corrected_pressure, "mbar")
 			
 		#light level calibration
-		corrected_light = light * 0.9216
+		corrected_light = light * 0.2304
 		# print ("Corrected Light: ", round(corrected_light,0), "lx")
 
 		#humidity calibration from data sheet
