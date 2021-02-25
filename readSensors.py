@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
 		#Teperature/pressure calibration from data sheet 
 		delta_temp = temp - (c5 << 8)
-		initial_temp = float(2000) + (delta_temp * c6 >> 23)
+		initial_temp = 2000 + (delta_temp * c6 >> 23)
 		temp2, offset2, sensitivity2 = corrections(initial_temp, delta_temp)
 		corrected_temp = (initial_temp -temp2) / 100
 		offset = ((c2 << 17) + ((c4 *delta_temp) >> 6)) - offset2
