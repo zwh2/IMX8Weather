@@ -21,7 +21,13 @@ window.onload = () => {
         pressure.push({x:new Date(time), y:data[time].pressure})
         humidity.push({x:new Date(time), y:data[time].humidity})
         light.push({x:new Date(time), y:data[time].light})
+        //add data to history chart also
+        htemperature.push({x:new Date(time), y:data[time].temp})
+        hpressure.push({x:new Date(time), y:data[time].pressure})
+        hhumidity.push({x:new Date(time), y:data[time].humidity})
+        hlight.push({x:new Date(time), y:data[time].light})
         chart.render();
+        histChart.render();
         //setTimeout(updateData, 1500);
     }
 
@@ -64,6 +70,6 @@ window.onload = () => {
     updateLiveData();
     updateHistory();
     setInterval(updateLiveData,1000);
-    setInterval(updateHistory,60000);
+    //setInterval(updateHistory,60000);
     
     }
